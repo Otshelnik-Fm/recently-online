@@ -28,10 +28,11 @@
 function rco_get_data_db( $atts ) {
     global $wpdb;
 
-    $offset = '';
+    $where = "actions.time_action > date_sub('" . current_time( 'mysql' ) . "', interval " . $atts['period'] . " HOUR)";
     // опция "исключить онлайн"
     if ( $atts['exclude-online'] === 'yes' ) {
         $offset = ' - INTERVAL ' . rcl_get_option( 'timeout', '10' ) . ' MINUTE';
+        $where  = "( actions.time_action BETWEEN NOW() - INTERVAL " . $atts['period'] . " HOUR AND '" . current_time( 'mysql' ) . "' " . $offset . " )";
     }
 
     $datas = $wpdb->get_results( "
@@ -42,7 +43,7 @@ function rco_get_data_db( $atts ) {
             LEFT JOIN " . $wpdb->usermeta . " AS t_meta
             ON wp_users.ID=t_meta.user_id
             AND meta_key IN ('rcl_avatar', 'ulogin_photo')
-            WHERE ( actions.time_action BETWEEN NOW() - INTERVAL " . $atts['period'] . " HOUR AND '" . current_time( 'mysql' ) . "' " . $offset . " )
+            WHERE " . $where . "
             ORDER BY actions.time_action DESC
             LIMIT 0,9999
         ", ARRAY_A );
@@ -54,16 +55,17 @@ function rco_get_data_db( $atts ) {
 function rco_get_count_db( $atts ) {
     global $wpdb;
 
-    $offset = '';
+    $where = "time_action > date_sub('" . current_time( 'mysql' ) . "', interval " . $atts['period'] . " HOUR)";
     // опция "исключить онлайн"
     if ( $atts['exclude-online'] === 'yes' ) {
         $offset = ' - INTERVAL ' . rcl_get_option( 'timeout', '10' ) . ' MINUTE';
+        $where  = "( time_action BETWEEN NOW() - INTERVAL " . $atts['period'] . " HOUR AND '" . current_time( 'mysql' ) . "' " . $offset . " )";
     }
 
     $datas = $wpdb->get_var( "
         SELECT COUNT(ID)
         FROM " . $wpdb->prefix . "rcl_user_action
-        WHERE ( time_action  BETWEEN NOW() - INTERVAL " . $atts['period'] . " HOUR AND '" . current_time( 'mysql' ) . "' " . $offset . " )
+        WHERE " . $where . "
 " );
 
     return $datas;
@@ -89,10 +91,14 @@ function rco_who_online( $attr ) {
     foreach ( $datas as $data ) {
         $human_time = rcl_get_useraction( $data['time_action'] );
         $time       = '';
+        $dop_class  = 'rco_offline';
         if ( $human_time ) {
             $time = ' - не в сети: ' . $human_time;
+        } else {
+            $dop_class = 'rco_online';
         }
-        $out .= '<div class="user-single">';
+
+        $out .= '<div class="user-single ' . $dop_class . '" data-user-id="' . $data['ID'] . '">';
         $out .= '<div class="thumb-user">';
         $out .= '<a title="' . $data['display_name'] . $time . '" href="' . get_author_posts_url( $data['ID'], $data['user_nicename'] ) . '">';
         if ( $data['meta_value'] ) {

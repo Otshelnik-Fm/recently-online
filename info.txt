@@ -1,5 +1,5 @@
 Name: Recently Online;
-Version: 1.0;
+Version: 1.1;
 Support Core: 16.17.0;
 Description: Шорткодом считаем и выводим кто недавно был онлайн;
 Author: Владимир Дружаев (Otshelnik-Fm);
