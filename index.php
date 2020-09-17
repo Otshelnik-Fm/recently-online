@@ -101,11 +101,7 @@ function rco_who_online( $attr ) {
         $out .= '<div class="user-single ' . $dop_class . '" data-user-id="' . $data['ID'] . '">';
         $out .= '<div class="thumb-user">';
         $out .= '<a title="' . $data['display_name'] . $time . '" href="' . get_author_posts_url( $data['ID'], $data['user_nicename'] ) . '">';
-        if ( $data['meta_value'] ) {
-            $out  .= '<img class="avatar" src="' . rcl_get_url_avatar( $data['meta_value'], $data['ID'], $size = 50 ) . '?ver=' . tag_escape( $data['time_action'] ) . '" alt="" width="50" height="50">';
-        } else {
-            $out .= get_avatar( $data['user_email'], 50 );
-        }
+        $out .= rco_get_avatar( $data, 50 );
         // значки "Кто в сети" нужны только если выводим и тех кто онлайн
         if ( $atts['exclude-online'] === 'no' ) {
             $out .= rco_status_ico( $data['time_action'] );
@@ -117,6 +113,31 @@ function rco_who_online( $attr ) {
     $out .= '</div>';
 
     return $out;
+}
+
+function rco_get_avatar( $data, $size ) {
+    $img = '';
+    if ( $data['meta_value'] ) {
+        $url_img = '';
+        if ( is_numeric( $data['meta_value'] ) ) {
+            $image_attributes = wp_get_attachment_image_src( $data['meta_value'], [ $size, $size ] );
+            $url_img          = $image_attributes[0];
+        } else {
+            $url_img = $data['meta_value'];
+        }
+
+        $time = ( isset( $data['time_action'] ) ) ? $data['time_action'] : '1';
+
+        $img .= '<img '
+            . 'class="avatar" '
+            . 'src="' . $url_img . '?ver=' . tag_escape( $time ) . '" '
+            . 'alt="user_' . $data['ID'] . '_avatar" '
+            . 'loading="lazy">';
+    } else {
+        $img .= get_avatar( $data['user_email'], $size );
+    }
+
+    return $img;
 }
 
 function rco_status_ico( $action ) {
